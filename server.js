@@ -10,7 +10,7 @@ const app = express()
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.json())
 app.use(cors())
-//app.use('/leds', swaggerUI.serve, swaggerUI.setup(swaggerDocument))
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument))
 //pi@192.168.178.48, pi, raspberry, 22
 
 app.get('/getLeds', function (req, res){
@@ -50,6 +50,7 @@ app.put('/updateLed', function (req, res) {
     })
     var LED = new gpio(ledID, 'out')
     LED.writeSync(ledState);
+    res.end();
 })
 
 app.post('/addLed', function (req, res) {
@@ -65,6 +66,7 @@ app.post('/addLed', function (req, res) {
         }
         console.log(leds)
     })
+    res.end();
 })
 
 app.delete('/deleteLed', function (req, res) {
@@ -74,6 +76,7 @@ app.delete('/deleteLed', function (req, res) {
         var updatedLeds = leds.filter(led => led.id != ledID)
         fs.writeFileSync( __dirname + "/" + "leds.json", JSON.stringify(updatedLeds));
     })
+    res.end();
 })
 
 app.listen(3000, () =>{

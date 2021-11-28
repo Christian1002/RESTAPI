@@ -1,0 +1,152 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "version": "4.1.6",
+      "title": "Raspberry LED control",
+      "description": "Controlling LEDs with Rest API and Swagger.io",
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      }
+    },
+    "host": "raspberrypi:3000",
+    "basePath": "/",
+    "tags": [
+      {
+        "name": "REST Led control",
+        "description": "Control Leds on RaspberryPi with REST"
+      }
+    ],
+    "schemes": ["http"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
+  
+    
+    "paths": {
+      "/getLeds": {
+        "get": {
+          "tags": ["Leds"],
+          "summary": "Get all leds",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "$ref": "#/definitions/Leds"
+              }
+            }
+          }
+        }
+      },
+
+      "/getLed/{id}": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "get": {
+          "tags": ["Leds"],
+          "summary": "Get led",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "$ref": "#/definitions/Led"
+              }
+            }
+          }
+        }
+      },
+
+      "/updateLed": {
+        "put": {
+          "tags": ["Leds"],
+          "parameters": [
+            {
+              "name": "Led",
+              "in": "body",
+              "description": "Led values",
+              "schema": {
+                "$ref": "#/definitions/Led"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Led is updated"
+            }
+          }
+        }
+      },
+
+      "/addLed": {
+        "post": {
+          "tags": ["Leds"],
+          "description": "Create new Led",
+          "parameters": [
+            {
+              "name": "Led",
+              "in": "body",
+              "schema": {
+                "$ref": "#/definitions/Led"
+              }
+            }
+          ],
+          "produces": ["application/json"],
+          "responses": {
+            "200": {
+              "description": "New Led is created"
+            }
+          }
+        }
+      },
+
+      "/deleteLed": {
+        "delete": {
+          "tags": ["Leds"],
+          "description": "Delete Led",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "body",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Led is removed"
+            }
+          }
+        }
+      }
+    },
+
+    "definitions": {
+        "Leds": {
+          "type": "array",
+          "$ref": "#/definitions/Led"
+        },
+        "Led": {
+          "required": ["id", "state"],
+          "properties": {
+            "id": {
+              "type": "number",
+              "uniqueItems": true
+            },
+            "state": {
+              "type": "number"
+            }
+          }
+        }
+    }
+  }
