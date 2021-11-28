@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>"RaspberryPI UI"</title>
+    <style>
+        div {
+            display: grid;
+        }
+
+        .layer {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .btn {
+            alignment: center;
+            text-align: center;
+            display: block;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border: 0;
+        }
+
+        input.checkboxClass {
+            width: 25px;
+            height: 25px;
+        }
+
+        #checkboxTable {
+            position: absolute;
+            margin-top: 138px;
+            margin-left: 1021px;
+            border-spacing: 0;
+        }
+
+        #buttonTable {
+            position: absolute;
+            margin-top: 136px;
+            margin-left: 1208px;
+            border-spacing: 0;
+        }
+
+        #buttonTableBody {
+            alignment: center;
+        }
+
+        #buttonTableBody td {
+            alignment: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1>Rest Led control</h1>
+<div>
+    <img class="layer" src="RaspberryPi.png" alt="RaspberryPi Image">
+    <table id="checkboxTable" class="layer">
+        <tbody id="checkboxTableBody">
+
+        </tbody>
+    </table>
+    <table id="buttonTable" class="layer">
+        <tbody id="buttonTableBody">
+
+        </tbody>
+    </table>
+</div>
+<script>
+    const mappingTable = [
+        -1, //3V3
+        -1, //5V
+        2, //GPIO 2
+        -1, //5V
+        3, //GPIO 3
+        -1, //Ground
+        4, //GPIO 4
+        14, //GPIO 14
+        -1, //Ground
+        15, //GPIO 15
+        17, //GPIO 17
+        18, //GPIO 18
+        27, //GPIO 27
+        -1, //Ground
+        22, //GPIO 22
+        23, //GPIO 23
+        -1, //3V3
+        24, //GPIO 24
+        10, //GPIO 10
+        -1, //Ground
+        9, //GPIO 9
+        25, //GPIO 25
+        11, //GPIO 11
+        8, //GPIO 8
+        -1, //Ground
+        7, //GPIO 7
+        0, //GPIO 0
+        1, //GPIO 1
+        5, //GPIO 5
+        -1, //Ground
+        6, //GPIO 6
+        12, //GPIO 12
+        13, //GPIO 13
+        -1, //Ground
+        19, //GPIO 19
+        16, //GPIO 16
+        26, //GPIO 26
+        20, //GPIO 20
+        -1, //Ground
+        21, //GPIO 21
+    ];
+
+    initButtonsTable();
+
+    initCheckboxTable();
+
+    synchronizePins();
+
+    function initButtonsTable() {
+        const tableBody = document.getElementById("buttonTableBody");
+        let counter = 1;
+        for (let i = 1; i <= 20; i++) {
+            let tr = document.createElement('TR');
+            tableBody.appendChild(tr);
+            for (let j = 0; j < 2; j++) {
+                let td = document.createElement('TD');
+                td.width = '35';
+                td.height = '37.17';
+                let btn = document.createElement("button");
+                btn.innerHTML = counter.toString();
+                btn.className = "btn";
+                btn.id = 'btn' + counter.toString();
+                btn.disabled = true;
+                btn.style.backgroundColor = "grey"
+                btn.style.color = "white"
+                if (mappingTable[counter - 1] !== -1) {
+                    btn.onclick = () => {
+                        getLed(mappingTable[Number(btn.innerHTML) - 1]).then(ledData => {
+                            ledData.json().then(ledArray => {
+                                console.log(ledArray)
+                                let ledState = ledArray[0].state;
+                                ledState = !ledState;
+                                ledState ? btn.style.backgroundColor = "red" : btn.style.backgroundColor = "white";
+                                changeLedState(mappingTable[Number(btn.innerHTML) - 1], Number(ledState))
+                            });
+                        });
+                    }
+                }
+
+                td.appendChild(btn);
+                tr.appendChild(td);
+                counter++;
+            }
+        }
+    }
+
+    function initCheckboxTable() {
+        const tableBody = document.getElementById("checkboxTableBody");
+        let counter = 1;
+        for (let i = 1; i <= 20; i++) {
+            let tr = document.createElement('TR');
+            tableBody.appendChild(tr);
+            for (let j = 0; j < 2; j++) {
+                let td = document.createElement('TD');
+                td.width = '362';
+                td.height = '37.1';
+                let checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = counter.toString();
+                checkbox.className = "checkboxClass";
+                if (mappingTable[counter - 1] !== -1) {
+                    checkbox.onchange = () => {
+                        let btn = document.getElementById('btn' + checkbox.id);
+                        if (!checkbox.checked) {
+                            btn.disabled = true;
+                            btn.style.backgroundColor = "grey"
+                            btn.style.color = "white"
+                            removeLed(mappingTable[checkbox.id - 1]);
+                        } else {
+                            btn.disabled = false;
+                            btn.style.backgroundColor = "white"
+                            btn.style.color = "black"
+                            addNewLed(mappingTable[checkbox.id - 1], 0);
+                        }
+                    }
+                }
+
+                td.appendChild(checkbox);
+                tr.appendChild(td);
+                counter++;
+            }
+        }
+    }
+
+    function synchronizePins() {
+        getLeds()
+            .then(ledData => {
+                ledData.json().then(ledArray => {
+                    ledArray.forEach(function (led) {
+                        let position = mappingTable.indexOf(led.id) + 1;
+                        let btn = document.getElementById('btn' + position);
+                        btn.disabled = false;
+                        led.state ? btn.style.backgroundColor = "red" : btn.style.backgroundColor = "white";
+                        btn.style.color = "black";
+                        document.getElementById(position.toString()).checked = true;
+                    });
+                })
+            })
+    }
+
+    async function getLeds() {
+        return (await fetch('http://raspberrypi:3000/getLeds'));
+    }
+
+    async function getLed(id) {
+        return (await fetch('http://raspberrypi:3000/getLed/' + id));
+    }
+
+    function changeLedState(id, state) {
+        fetch('http://raspberrypi:3000/updateLed', {
+            method: 'PUT',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: id,
+                state: state
+            })
+        });
+    }
+
+    function addNewLed(id, state) {
+        fetch('http://raspberrypi:3000/addLed', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: id,
+                state: state
+            })
+        });
+    }
+
+    function removeLed(id) {
+        fetch('http://raspberrypi:3000/deleteLed', {
+            method: 'DELETE',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: id
+            })
+        });
+    }
+</script>
+</body>
+</html>
